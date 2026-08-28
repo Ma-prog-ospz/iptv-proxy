@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: stalker-xtream-api
+    name: iptv-proxy-zbuv
     env: node
     plan: free
     region: frankfurt
