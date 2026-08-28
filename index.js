@@ -3,35 +3,36 @@ import fetch from "node-fetch";
 
 const app = express();
 
-const MPD_URL = "https://bpcdnmanprod.nexttv.ht.hr/bpk-tv/HRT1/default/index.mpd";
+const PORTAL = "http://klaratv.com:80/c/";
+const MAC = "00:1A:79:4F:D1:78";
 
-app.get("/hrt1.m3u8", async (req, res) => {
-  const mpd = await fetch(MPD_URL).then(r => r.text());
+async function getToken() {
+  const res = await fetch(`${PORTAL}server/load.php?type=stb&action=handshake&mac=${MAC}`);
+  const data = await res.json();
+  return data.token;
+}
 
-  const segments = [...mpd.matchAll(/media="([^"]+)"/g)].map(m => m[1]);
+async function getChannels(token) {
+  const res = await fetch(`${PORTAL}server/load.php?type=itv&action=get_all_channels&mac=${MAC}&token=${token}`);
+  const data = await res.json();
+  return data.data;
+}
 
-  let playlist = "#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:4\n#EXT-X-MEDIA-SEQUENCE:0\n";
+app.get("/player_api.php", async (req, res) => {
+  const token = await getToken();
+  const channels = await getChannels(token);
 
-  segments.forEach(seg => {
-    playlist += `#EXTINF:4.0,\n/proxy/${seg}\n`;
-  });
+  const xtream = {
+    user_info: {
+      username: "ftv",
+      password: "ftv",
+      auth: 1,
+      status: "Active"
+    },
+    available_channels: channels
+  };
 
-  res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
-  res.send(playlist);
+  res.json(xtream);
 });
 
-app.get("/proxy/*", async (req, res) => {
-  const url = "https://bpcdnmanprod.nexttv.ht.hr/bpk-tv/HRT1/default/" + req.params[0];
-
-  const response = await fetch(url, {
-    headers: {
-      "Range": req.headers["range"],
-      "User-Agent": req.headers["user-agent"]
-    }
-  });
-
-  res.status(response.status);
-  response.body.pipe(res);
-});
-
-app.listen(3000);
+app.listen(3000, () => console.log("Xtream API running"));
