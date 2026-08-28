@@ -19,20 +19,24 @@ async function getChannels(token) {
 }
 
 app.get("/player_api.php", async (req, res) => {
-  const token = await getToken();
-  const channels = await getChannels(token);
+  try {
+    const token = await getToken();
+    const channels = await getChannels(token);
 
-  const xtream = {
-    user_info: {
-      username: "ftv",
-      password: "ftv",
-      auth: 1,
-      status: "Active"
-    },
-    available_channels: channels
-  };
+    const xtream = {
+      user_info: {
+        username: "ftv",
+        password: "ftv",
+        auth: 1,
+        status: "Active"
+      },
+      available_channels: channels
+    };
 
-  res.json(xtream);
+    res.json(xtream);
+  } catch (err) {
+    res.status(500).send("Error: " + err.toString());
+  }
 });
 
 app.listen(3000, () => console.log("Xtream API running"));
