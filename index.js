@@ -2,19 +2,41 @@ import express from "express";
 
 const app = express();
 
-const PORTAL = "http://klaratv.com:80/c/";
+const PORTAL = "http://klaratv.com:80";
 const MAC = "00:1A:79:4F:D1:78";
 
 async function getToken() {
-  const res = await fetch(`${PORTAL}server/load.php?type=stb&action=handshake&mac=${MAC}`);
+  const url = `${PORTAL}/portal.php?action=handshake&type=stb&token=&JsHttpRequest=1-xml`;
+
+  const res = await fetch(url, {
+    headers: {
+      "Authorization": `MAC ${MAC}`,
+      "User-Agent": "Mozilla/5.0",
+      "Referer": `${PORTAL}/c/`,
+      "Accept": "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  });
+
   const data = await res.json();
-  return data.token;
+  return data.js.token;
 }
 
 async function getChannels(token) {
-  const res = await fetch(`${PORTAL}server/load.php?type=itv&action=get_all_channels&mac=${MAC}&token=${token}`);
+  const url = `${PORTAL}/portal.php?type=itv&action=get_all_channels&JsHttpRequest=1-xml`;
+
+  const res = await fetch(url, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "User-Agent": "Mozilla/5.0",
+      "Referer": `${PORTAL}/c/`,
+      "Accept": "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest"
+    }
+  });
+
   const data = await res.json();
-  return data.data;
+  return data.js.data;
 }
 
 app.get("/player_api.php", async (req, res) => {
