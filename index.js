@@ -1,5 +1,4 @@
 import express from "express";
-import fetch from "node-fetch";
 
 const app = express();
 
@@ -23,7 +22,7 @@ app.get("/player_api.php", async (req, res) => {
     const token = await getToken();
     const channels = await getChannels(token);
 
-    const xtream = {
+    res.json({
       user_info: {
         username: "ftv",
         password: "ftv",
@@ -31,9 +30,8 @@ app.get("/player_api.php", async (req, res) => {
         status: "Active"
       },
       available_channels: channels
-    };
+    });
 
-    res.json(xtream);
   } catch (err) {
     res.status(500).send("Error: " + err.toString());
   }
