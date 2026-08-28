@@ -24,7 +24,8 @@ async function getToken() {
 
   const text = await res.text();
 
-  console.log("HANDSHAKE RESPONSE:\n", text.slice(0, 500));
+  console.log("RAW HANDSHAKE RESPONSE LENGTH:", text.length);
+  console.log("RAW HANDSHAKE RESPONSE FIRST 500 CHARS:\n", text.slice(0, 500));
 
   if (!text.startsWith("{")) {
     throw new Error("Handshake returned non‑JSON: " + text.slice(0, 200));
@@ -33,7 +34,6 @@ async function getToken() {
   const data = JSON.parse(text);
   return data.js.token;
 }
-
 
 async function getChannels(token) {
   const url = `${BASE}/portal.php?type=itv&action=get_all_channels&JsHttpRequest=1-xml`;
