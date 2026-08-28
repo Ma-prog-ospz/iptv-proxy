@@ -2,40 +2,54 @@ import express from "express";
 
 const app = express();
 
-const PORTAL = "http://klaratv.com:80";
+const BASE = "http://klaratv.com:80";
 const MAC = "00:1A:79:4F:D1:78";
 
+const COMMON_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+  "Referer": `${BASE}/c/`,
+  "Accept": "application/json, text/javascript, */*; q=0.01",
+  "X-Requested-With": "XMLHttpRequest"
+};
+
 async function getToken() {
-  const url = `${PORTAL}/portal.php?action=handshake&type=stb&token=&JsHttpRequest=1-xml`;
+  const url = `${BASE}/portal.php?action=handshake&type=stb&token=&JsHttpRequest=1-xml`;
 
   const res = await fetch(url, {
     headers: {
-      "Authorization": `MAC ${MAC}`,
-      "User-Agent": "Mozilla/5.0",
-      "Referer": `${PORTAL}/c/`,
-      "Accept": "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest"
+      ...COMMON_HEADERS,
+      "Authorization": `MAC ${MAC}`
     }
   });
 
-  const data = await res.json();
+  const text = await res.text();
+
+  // Ako nije JSON → error
+  if (!text.startsWith("{")) {
+    throw new Error("Handshake returned non‑JSON: " + text.slice(0, 200));
+  }
+
+  const data = JSON.parse(text);
   return data.js.token;
 }
 
 async function getChannels(token) {
-  const url = `${PORTAL}/portal.php?type=itv&action=get_all_channels&JsHttpRequest=1-xml`;
+  const url = `${BASE}/portal.php?type=itv&action=get_all_channels&JsHttpRequest=1-xml`;
 
   const res = await fetch(url, {
     headers: {
-      "Authorization": `Bearer ${token}`,
-      "User-Agent": "Mozilla/5.0",
-      "Referer": `${PORTAL}/c/`,
-      "Accept": "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest"
+      ...COMMON_HEADERS,
+      "Authorization": `Bearer ${token}`
     }
   });
 
-  const data = await res.json();
+  const text = await res.text();
+
+  if (!text.startsWith("{")) {
+    throw new Error("Channels returned non‑JSON: " + text.slice(0, 200));
+  }
+
+  const data = JSON.parse(text);
   return data.js.data;
 }
 
